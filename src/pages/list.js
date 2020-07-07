@@ -7,10 +7,10 @@ import {
   Button, 
   FlatList, 
   TouchableOpacity, 
+  ScrollView
 } from 'react-native';
 import Modal, { ModalContent, ModalButton } from 'react-native-modals';
 import BluetoothSerial from 'react-native-bluetooth-serial';
-import { DotsLoader, TextLoader } from 'react-native-indicator';
 
 export default class List extends Component {
   constructor(){
@@ -91,9 +91,8 @@ export default class List extends Component {
 
   }
   _renderItem(item){
- 
     return(<TouchableOpacity onPress={() => this.connect(item.item)}>
-            <View style={styles.deviceNameWrap}>
+            <View style={item.index % 2 === 0 ? styles.deviceNameWrap : styles.deviceNameWrapAlt}>
               <Text style={styles.deviceName}>{ item.item.name ? item.item.name : item.item.id }</Text>
             </View>
           </TouchableOpacity>)
@@ -146,15 +145,19 @@ export default class List extends Component {
               />
             </View>
       </View>
-        <FlatList
-          style={styles.list}
-          data={this.state.devices}
-          keyExtractor={item => item.id}
-          renderItem={(item) => this._renderItem(item)}
-        />
+        <ScrollView>
+          <FlatList
+            style={styles.list}
+            data={this.state.devices}
+            keyExtractor={item => item.id}
+            renderItem={(item) => this._renderItem(item)}
+          />
+        </ScrollView>
         <View
           style={styles.footer}
-        />
+        >
+          <Text style={styles.footerText}>₢ CCT/UENP - 2020</Text>
+        </View>
         <Modal
           visible={this.state.visible}
           onTouchOutside={() => {
@@ -178,12 +181,14 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 30,
-    borderColor: '#00897b',
-    borderRightWidth: 1,
-    borderLeftWidth: 1,
+    borderColor: '#00695c',
     borderTopWidth: 2,
-    borderBottomWidth: 1,
     backgroundColor: '#00897b',
+    alignItems: 'center',
+  },
+  footerText: {
+    marginTop: 5,
+    color: '#fff'
   },
   loader: {
     marginTop: -25,
@@ -222,24 +227,34 @@ const styles = StyleSheet.create({
   },
   toolbarTitle:{
     textAlign:'center',
-    fontWeight:'bold',
     fontSize: 20,
     flex:1,
     marginTop:6,
     color: '#fff',
   },
   deviceName: {
-    fontSize: 17,
-    color: "black"
+    fontSize: 18,
+    lineHeight: 20,
+    fontFamily: 'Avenir'
   },
   deviceNameWrap: {
-    padding: 5,
-    margin: 10,
-    borderBottomWidth: 2,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderRadius: 15
+    flex: 1,
+    paddingVertical:15,
+    paddingHorizontal:15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#bebebe'
+  },
+  deviceNameWrapAlt: {
+    flex: 1,
+    paddingVertical:15,
+    paddingHorizontal:15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#bebebe',
+    backgroundColor: '#e0e0e0'
   },
   containerHome: {
     flex: 1,

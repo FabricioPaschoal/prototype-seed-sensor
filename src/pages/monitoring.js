@@ -7,7 +7,7 @@ import {
   Button, 
   FlatList, 
   TouchableOpacity, 
-  TextInput
+  TextInput, ScrollView
 } from 'react-native';
 import Modal, { ModalContent, ModalButton } from 'react-native-modals';
 import BluetoothSerial from 'react-native-bluetooth-serial';
@@ -23,57 +23,80 @@ export default class List extends Component {
       discovering: false,
       lines:[
         { id: 0, name: "1", textStyle: styles.lineNameConect, containerStyle: styles.containerLineConect },
-        { id: 1, name: "2", textStyle: styles.lineNameConect, containerStyle: styles.containerLineConect },
-        { id: 2, name: "3", textStyle: styles.lineNameConect, containerStyle: styles.containerLineConect },
-        { id: 3, name: "4", textStyle: styles.lineNameConect, containerStyle: styles.containerLineConect },
-        { id: 4, name: "5", textStyle: styles.lineNameConect, containerStyle: styles.containerLineConect },
-        { id: 5, name: "6", textStyle: styles.lineNameConect, containerStyle: styles.containerLineConect },
-      ],
+        ],
       unpariedDevices: [],
       connected: false,
       visibleConected: false,
       sensorParams: 0,
       meters: "1",
       seeds: "10",
+      velocity: "7",
+      count: 0,
+      status: '',
     }
   }
-  
-  componentDidMount() {
-    
+
+  async componentWillMount(){
+    await this.monitoringLines();
+  }
+
+  async monitoringLines(){
+    const metersPerSecond = Math.round(this.state.velocity / 3.6);
+    const seedsPerSecond = metersPerSecond * this.state.seeds;
+    if(this.state.count === seedsPerSecond - 1 || this.state.count === seedsPerSecond + 1 || this.state.count === seedsPerSecond){
+      this.setState({
+        lines:[
+          { id: 0, name: "1", textStyle: styles.lineNameTrue, containerStyle: styles.containerLineTrue },
+          ],
+          count: 0
+      })
+    }else {
+      this.setState({
+        lines:[
+          { id: 0, name: "1", textStyle: styles.lineNameFalse, containerStyle: styles.containerLineFalse },
+          ],
+          count: 0
+      })
+    }
+    setTimeout(() => {
+      this.monitoringLines()
+    }, 1000)
   }
 
   async writeHCModule(message){
     BluetoothSerial.write(message)
     .then((res) => {
       console.log(res);
-      console.log('Successfuly wrote to device')
       this.setState({ connected: true })
     })
     .catch((err) => console.log(err.message))
   }
 
-  async readHCModule(){
-    console.log('read');
+  // async readHCModule(){
+  //   console.log('read');
     
-    BluetoothSerial.readFromDevice()
-    .then((res) => {
-      console.log(res);
-      console.log('Successfuly wrote to device')
-      this.setState({ connected: true })
-    })
-    .catch((err) => console.log(err.message))
-  }
+  //   BluetoothSerial.readFromDevice()
+  //   .then((res) => {
+  //     console.log(res);
+  //     this.setState({ connected: true })
+  //   })  
+  //   .catch((err) => console.log(err.message))
+  //}
 
   async readHCModule(){
-    setTimeout(() => {
       BluetoothSerial.readFromDevice()
-    .then((res) => {
-      console.log(res);
-      console.log('Successfuly wrote to device')
-      this.setState({ connected: true, sensorParams: res })
+    .then(async (res) => {
+      if(res !== ''){
+        await this.setState({ count: this.state.count+1 })
+        setTimeout(() => {
+
+        }, 200)
+      }
     })
     .catch((err) => console.log(err.message))
-    }, 100)
+    setTimeout(() => {
+      this.readHCModule()
+    }, 200)
   }
 
   _renderItem(item){
@@ -91,6 +114,7 @@ export default class List extends Component {
       <View style={styles.toolbar}>
             <Text style={styles.toolbarTitle}>LINHAS MONITORADAS</Text>
       </View>
+        <ScrollView>
         <View style={styles.containerMonitoring}>
             <FlatList
             data={this.state.lines}
@@ -99,14 +123,8 @@ export default class List extends Component {
             renderItem={(item) => this._renderItem(item)}
             />
         </View>
+        <Text style={styles.textInputInformations}>{this.state.count}</Text>
         <View style={styles.containerInformations}>
-            <Text style={styles.textInputInformations}>Metros:</Text>
-            <TextInput
-                style={styles.inputNumber}
-                onChangeText={text => this.setState({ meters: text })}
-                keyboardType="numeric"
-                value={this.state.meters}
-            />
             <Text style={styles.textInputInformations}>Quantidade de sementes por metro:</Text>
             <TextInput
                 style={styles.inputNumber}
@@ -114,6 +132,19 @@ export default class List extends Component {
                 keyboardType="numeric"
                 value={this.state.seeds}
             />
+            <Text style={styles.textInputInformations}>Velcidade estimada para o plantio:</Text>
+            <TextInput
+                style={styles.inputNumber}
+                onChangeText={text => this.setState({ velocity: text })}
+                keyboardType="numeric"
+                value={this.state.velocity}
+            />
+        </View>
+        </ScrollView>
+        <View
+          style={styles.footer}
+        >
+          <Text style={styles.footerText}>₢ CCT/UENP - 2020</Text>
         </View>
       </View>
     );
@@ -121,13 +152,24 @@ export default class List extends Component {
 }
 
 const styles = StyleSheet.create({
+    footer: {
+      height: 30,
+      borderColor: '#00695c',
+      borderTopWidth: 2,
+      backgroundColor: '#00897b',
+      alignItems: 'center',
+    },
+    footerText: {
+      marginTop: 5,
+      color: '#fff'
+    },
     containerInformations: {
-        padding: 20,
+        padding: 10,
         borderRightWidth: 1,
         borderLeftWidth: 1,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        marginTop: 80,
+        marginTop: 52,
         margin: 5,
         borderRadius: 15, 
         backgroundColor: '#e0e0e0',
@@ -200,20 +242,22 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5FCFF',
     },
     toolbar:{
-        paddingTop:30,
-        paddingBottom:30,
-        flexDirection:'row',
-        backgroundColor: '#00695c',
-        fontStyle: 'italic',
-        borderRadius: 2,
-        borderColor: '#dddddd',
-        borderBottomWidth: 2,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.8,
-        shadowRadius: 5,
-        elevation: 1,
-        marginTop: -5
+      paddingTop:30,
+      paddingBottom:30,
+      flexDirection:'row',
+      backgroundColor: '#00897b',
+      fontStyle: 'italic',
+      borderRadius: 2,
+      borderColor: '#00695c',
+      borderRightWidth: 2,
+      borderLeftWidth: 2,
+      borderTopWidth: 2,
+      borderBottomWidth: 2,
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.8,
+      shadowRadius: 5,
+      elevation: 1,
     },
     toolbarButton:{
         width: 50,
@@ -224,12 +268,11 @@ const styles = StyleSheet.create({
         borderRadius: 15
     },
     toolbarTitle:{
-        textAlign:'center',
-        fontWeight:'bold',
-        fontSize: 20,
-        flex:1,
-        marginTop:6,
-        color: '#fff',
+      textAlign:'center',
+      fontSize: 25,
+      flex:1,
+      marginTop:6,
+      color: '#fff',
     },
 });
 
