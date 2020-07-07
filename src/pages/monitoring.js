@@ -29,7 +29,7 @@ export default class List extends Component {
       visibleConected: false,
       sensorParams: 0,
       meters: "1",
-      seeds: "10",
+      seeds: "2",
       velocity: "7",
       count: 0,
       status: '',
